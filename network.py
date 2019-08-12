@@ -12,6 +12,7 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from gym.spaces import Box, Discrete
+from gym import Env
 
 def MultiLayerPerc():
     '''
@@ -33,4 +34,4 @@ def MultiLayerPerc():
         else 
         inshp={}
         model.add(Dense(layeroutsize, activation=cfg["activation"], **inshp))
-    
+
