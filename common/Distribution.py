@@ -76,6 +76,9 @@ class ProbType(object):
 
 
 class Categorical(ProbType):
+    """
+    define categorical probability type 
+    """
     def __init__(self, n):
         self.n = n
     def sampled_variable(self):
@@ -98,6 +101,9 @@ class Categorical(ProbType):
         return prob.argmax(axis=1)
 
 class CategoricalOneHot(ProbType):
+    """
+    convert categorical distribution into onehot code
+    """
     def __init__(self, n):
         self.n = n
     def sampled_variable(self):

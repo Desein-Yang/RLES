@@ -13,25 +13,47 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation
 from gym.spaces import Box, Discrete
 from gym import Env
+from common.Distribution import Categorical,DiagGauss
 
-def MultiLayerPerc():
+def MultiLayerPerc(cfg):
     '''
     construct a multilayer perception network with 64 hidden units to make policy
     # Argument: cfg
-    # 
+    # Return: model
     '''
-    # if value is BOX it means continious else Discrete
-    ifinstance(ac_space,Box): 
-
-    ifinstance(ac_space,Discrete):
-
     model=Sequential()
     hid_sizes=cfg["hid_sizes"]
     activation=cfg["activation"]
+    # add two 64 hidden unit separated by tanh
     for (i, layeroutsize) in enumerate(hid_sizes):
-        if i==0 
-        inshp = dict(input_shape=ob_space.shape) 
-        else 
-        inshp={}
-        model.add(Dense(layeroutsize, activation=cfg["activation"], **inshp))
+        if i==0:
+            inshp = dict(input_shape=ob_space.shape) 
+        else:
+            inshp={}
+        model.add(Dense(layeroutsize, activation, **inshp))
+        
+    if isinstance(ac_space, Box):
+        outdim=ac_space.shape[0]
+        model.add(Dense(outdim))
+        model.add(ConcatFixedStd())
+    elif ifinstance(ac_space,Discrete):
+        outdim=ac_space.n
+        model.add(Dense(outdim, activation="softmax"))
+    return model
+
+def decision(ob_space,ac_space,model):
+    '''
+    Input:\n observation_space and action_space\n model\n
+    Output:\n policy
+    '''
+
+class Policy(object):
+    '''
+    Define policy class to optimize
+    '''
+    def __init__(self):
+
+    def act():
+    ''' make decision as policy'''
+
 

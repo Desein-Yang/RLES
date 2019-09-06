@@ -10,3 +10,13 @@
 
 # here put the import lib
 
+class Agent():
+    '''
+    Define agent without policy
+    '''
+    def __init__(self):
+
+
+
+
+
