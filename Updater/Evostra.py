@@ -43,14 +43,14 @@ class Evostra():
                 theta: theta in t iteration
         Output:F(x+noise) 
         '''
-        sigma=np.array(self.sigma)
+        sigma=np.matrix(self.sigma)
         fitness=np.zeros(self.pop)
         noiselist=[]
         assert self.pop%2==0,'Population config error'
         for i in range(0,self.pop):
             noise=self.Sampling()
             if (i%2==0):
-                fitness[i]=PolicyFun(theta+noise*sigma.T)
+                fitness[i]=PolicyFun(theta+noise*(sigma.T))
             else:
                 fitness[i]=PolicyFun(theta-noise*sigma.T)
             noiselist.append(noise)
@@ -106,7 +106,7 @@ def PolicyFun(x):
     '''
     policy function
     '''
-    return x
+    return x.cumsum()
 
 def optimizer(x):
     '''
