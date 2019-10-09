@@ -9,4 +9,12 @@
 '''
 
 # here put the import lib
+# is agentgen.py
+class Policy(object):
+    '''
+    Define policy class to optimize
+    '''
+    def __init__(self):
 
+    def act():
+    ''' make decision as policy'''
