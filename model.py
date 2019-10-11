@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''
-@File    :   network.py
+@File    :   model.py
 @Time    :   2019/08/10 21:43:16
 @Author  :   Qi Yang
 @Version :   1.0

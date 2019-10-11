@@ -18,13 +18,22 @@ from gym import wrappers,logger
 class Agent():
     '''
     Define agent without policy
+    act: output action 
+    get_parameter: get parameter now
+    set_parameter: set parameter 
     '''
     def __init__(self,action_space):
         self.action_space=action_space
 
-    def act(NotImplemented):
+    def act(self):
         '''input:observation,reward,doneflag\noutput:action i action_space'''
-        pass
+        raise NotImplementedError
+
+    def get_parameter(self):
+        return self.par
+
+    def set_parameter(self,newpar):
+        self.par=newpar
 
 #here is a random agent
 class RandomAgent(Agent):
