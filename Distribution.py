@@ -13,8 +13,8 @@
 import numpy as np
 #from tensorflow import tnsor
 #import theano.tensor as T, theano
-'''此处后端使用的是theano，改成TensorflowT需要对照修改,也可以不修改直接用
-'''
+#此处后端使用的是theano，改成TensorflowT需要对照修改,也可以不修改直接用
+
 from keras import backend as K
 
 K.set_floatx(np.float64)
