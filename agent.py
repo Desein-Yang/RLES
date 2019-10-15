@@ -52,7 +52,6 @@ class CESAgent(Agent):
         self.action_space=action_space
 
     def act(self,observation,reward,done):
-        return self.action_space.sample()
 
 # here is a test 
 # args structure:env_id
