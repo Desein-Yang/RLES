@@ -15,6 +15,13 @@ import sys
 import gym
 from gym import wrappers,logger
 
+test_envs={'algorithm':'Copy-v0',
+           'toy_text':'FrozenLake-v0',#not successful
+           'control':'CartPole-v0', # OK
+           'atari':'SpaceInvaders-v0',# OK
+          'mujoco':'Humanoid-v1',     # not successful
+          'box2d':'LunarLander-v2' }  # not successful
+
 # here is a base class
 class Agent():
     '''
@@ -28,6 +35,10 @@ class Agent():
 
     def act(self):
         '''input:observation,reward,doneflag\noutput:action i action_space'''
+        raise NotImplementedError
+
+    def rollout(self):
+        '''train'''
         raise NotImplementedError
 
     def get_parameter(self):
@@ -52,6 +63,7 @@ class CESAgent(Agent):
         self.action_space=action_space
 
     def act(self,observation,reward,done):
+        pass
 
 # here is a test 
 # args structure:env_id
@@ -64,9 +76,9 @@ if __name__ == "__main__":
 
     env=gym.make(args.env_id) 
     outdir='./tmp/results'
-    env=wrappers.Monitor(env,directory=outdir,force=True)# run environment
+    env=wrappers.Monitor(env,directory=outdir,force=True)
     env.seed(0)
-    agent=RandomAgent(env.action_space)#configure agent
+    agent=RandomAgent(env.action_space)
 
     # config
     episode_count=100

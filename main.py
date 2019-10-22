@@ -12,6 +12,7 @@
 import parser
 import agent as ag
 import optimizer as op
+import model
 import logging
 import gym
 from gym import wrappers,logger,vector
@@ -22,7 +23,7 @@ def main():
     args=parser.ParseArgs()
     cfg={
         "learning_rate":0.1,
-        "activiation_fn":None,
+        "activiation":None,
     }
 
     #save configure parameter #args:env,multiprocess,hyperparameter
@@ -38,6 +39,7 @@ def main():
     agent=ag.RandomAgent(env.action_space)
     
     #create optimizer and set hyperparameters
+    model=model.MultiLayerPerc(cfg,env.ob_space,env.action_space)
     optimizer=op.ces(cfg)
 
     #set level of log information
@@ -60,21 +62,5 @@ def main():
                 env.render()
             if done:
                 break
-        #create episodes (length,reward,noise index)
-        
-        
-        #get parameter from optimizer
-        
-        #set parameter of policy
-        #get length and reward from environment
-        #save episode in buffer
-        #evaluate mean and max reward
-            
-        #flatten episode information
-        #update parameter of optimizer
-        #count step num
-        
-        #write log of parameter
-        #visualize by replay information
 
     env.close()
