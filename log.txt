@@ -1,7 +1,0 @@
-2019-10-16  16:12:44 Wed logger.py[line:11] DEBUG msg1
-2019-10-16  16:12:44 Wed logger.py[line:12] INFO msg2
-2019-10-16  16:12:44 Wed logger.py[line:13] WARNING msg3
-2019-10-16  16:12:44 Wed logger.py[line:14] ERROR msg4
-2019-10-16  16:12:44 Wed logger.py[line:15] CRITICAL msg5
-2019-10-16  16:12:44 Wed logger.py[line:21] INFO I'm logger12
-2019-10-16  16:12:44 Wed logger.py[line:24] WARNING 12is self's b

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+
+#@File    :   model.py\n
+#@Time    :   2019/08/10 21:43:16\n
+#@Author  :   Qi Yang\n
+#@Version :   1.0\n
 '''
-@File    :   model.py
-@Time    :   2019/08/10 21:43:16
-@Author  :   Qi Yang
-@Version :   1.0
 @Describtion:   construct network by keras\n has been tested successfully
 '''
 
@@ -45,7 +46,7 @@ bn_args = {
 }
 
 
-def Network(ob_space,action_space):
+def Network(ob_space,ac_space):
     '''
     construct a multilayer perception network with 64 hidden units to make policy
     # Argument: cfg
@@ -53,14 +54,15 @@ def Network(ob_space,action_space):
     '''
     model=Sequential()
     # get input shape
+    inshp=ob_space.shape
     
 
     # get output dimension
     outdim=0
-    if isinstance(action_space, Box):
-        outdim=action_space.shape[0]
-    elif isinstance(action_space,Discrete):
-        outdim=action_space.n
+    if isinstance(ac_space, Box):
+        outdim=ac_space.shape[0]
+    elif isinstance(ac_space,Discrete):
+        outdim=ac_space.n
     assert outdim != 0 
 
     # construct models layer by layer
@@ -96,8 +98,8 @@ if __name__ == "__main__":
     env=gym.make('SpaceInvaders-v0') 
  
     ob_space=env.reset()
-    action_space=env.action_space
-    model=Network(ob_space,action_space)
+    ac_space=env.action_space
+    model=Network(ob_space,ac_space)
     for i in range(10):
         print(model.get_layer(index=i))
     

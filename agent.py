@@ -10,10 +10,12 @@
 
 # here put the import lib
 import argparse
-import pip
 import sys
 import gym
-from gym import wrappers,logger
+import numpy as np
+from gym import wrappers,logger,envs
+from keras.optimizers import SGD,Adam
+import model 
 
 test_envs={'algorithm':'Copy-v0',
            'toy_text':'FrozenLake-v0',#not successful
@@ -21,6 +23,11 @@ test_envs={'algorithm':'Copy-v0',
            'atari':'SpaceInvaders-v0',# OK
           'mujoco':'Humanoid-v1',     # not successful
           'box2d':'LunarLander-v2' }  # not successful
+
+# print env_id list
+all_envs = envs.registry.all()
+env_ids = [env_spec.id for env_spec in all_envs]
+print(env_ids)
 
 # here is a base class
 class Agent():
@@ -30,69 +37,93 @@ class Agent():
     get_parameter: get parameter now
     set_parameter: set parameter 
     '''
-    def __init__(self,action_space):
-        self.action_space=action_space
+    def __init__(self,env):
+        self.env=env
+        self.episode_count=10000
+
+        self.ac_space=env.action_space
+        self.ob_space=env.ob_space
+        
 
     def act(self):
         '''input:observation,reward,doneflag\noutput:action i action_space'''
         raise NotImplementedError
 
-    def rollout(self):
-        '''train'''
-        raise NotImplementedError
-
     def get_parameter(self):
-        return self.par
+        pass
 
-    def set_parameter(self,newpar):
-        self.par=newpar
+    def set_parameter(self,parameters):
+        pass
+
+    def rollout(self,render=False):
+        '''run the agent and provide cumulative reward and iteration times'''
+        ob = self.env.reset()
+        ob = np.asarray(ob)
+        reward=0
+        done=False
+        times = 0
+        cum_rew=0
+        for _ in range(self.episode_count):
+            action = self.act(ob,reward,done)
+            ob,reward,done,_ = self.env.step(np.argmax(action))
+            ob = np.asarray(ob)
+            cum_rew += reward
+            times += 1
+            if render:
+                self.env.render('rgb_array')
+            if done:
+                break
+
+        return cum_rew,times
 
 #here is a random agent
 class RandomAgent(Agent):
     '''create  a random agent'''
-    def __init__(self,action_space):
-        self.action_space=action_space
+    def __init__(self,env):
+        self.env=env
+        self.episode_count=10000
+        self.ac_space=env.action_space
 
-    def act(self,observation,reward,done):
-        return self.action_space.sample()
+    def act(self,observation):
+        return self.ac_space.sample()
 
-# write other agent
-class CESAgent(Agent):
-    def __init__(self,model,action_space):
-        self.model=model
-        self.action_space=action_space
+class EsAgent(Agent):
+    def __init__(self,env,optimizer):
+        self.env=env
+        self.episode_count=10000
 
-    def act(self,observation,reward,done):
-        pass
+        self.ac_space=env.action_space
+        self.ob_space=env.ob_space
+
+        self.model=model.Network(self.ob_space,self.ac_space)
+        self.optimizer=optimizer
+
+
+    def act(self,observation):
+        '''input:observation,reward,doneflag\noutput:action i action_space'''
+        return self.policy.act(observation)
+
+    def compile(self,optimizer,metrics):
+        '''rewrite model.compile() to perform reinforcement learning'''
+
+
 
 # here is a test 
 # args structure:env_id
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser(description=None)# command line parser into python
-    parser.add_argument('env_id',nargs='?',default='SpaceInvaders-v0',help='select the environment')# add help informations to add argument
-    args=parser.parse_args()
-
+ 
     logger.set_level(logger.INFO)
 
-    env=gym.make(args.env_id) 
-    outdir='./tmp/results'
-    env=wrappers.Monitor(env,directory=outdir,force=True)
-    env.seed(0)
-    agent=RandomAgent(env.action_space)
+    env=gym.make('SpaceInvaders-v0') 
 
-    # config
-    episode_count=100
-    reward=0
-    done=False
 
-    for i in range(episode_count):
-        ob=env.reset()#observe environment
-        while True:
-            action=agent.act(ob,reward,done)#make action
-            ob,reward,done,_=env.step(action)
-            env.render('rgb_array')
-            if done:
-                break
-            
+    agent=RandomAgent(env)
+
+    optimizer=SGD(0.1,0)
+
+    reward,times=agent.rollout(render=False)
+
+    print(reward)
+    print(times)
     env.close()
 

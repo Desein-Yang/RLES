@@ -13,25 +13,13 @@
 from keras import optimizers
 import logging 
 import numpy as np
-from numpy.random import RandomState,random_integers
+from numpy.random import RandomState,random_integers,randint
+import math
 
 # pytorch optimizer reference
 # https://pytorch-cn.readthedocs.io/zh/latest/package_references/torch-optim/
 # keras optimizer reference
 # https://keras.io/optimizers/
-
-
-
-# create an instance of logger by module
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename='log.txt',
-    filemode='w',
-    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-    datefmt = '%Y-%m-%d  %H:%M:%S %a'
-)
-logger=logging.getLogger(__name__)
-logger.setLevel('INFO')
 
 
 class optimizer(object):
@@ -43,117 +31,201 @@ class optimizer(object):
 
     #def get_weight(self):
 
-    #sample gaussian noise to perturb params
+    # Sample gaussian noise to perturb params
     def sample(self):
-        noise_table = RandomState(123).randn(int(5e8)).astype('float32')
-        return random_integers(0, len(noise_table)-len(self.params))
+        raise NotImplementedError
 
+    # Compute policy gradient
     def get_grad(self):
         raise NotImplementedError
 
+    # Update optimizer based on reward
     def get_update(self):
         #self.par=self.par+grad*self.rate
         raise NotImplementedError
 
+    # get config of optimizer
     def get_config(self):
-        '''get config parameters of this optimizer'''
-        config ={
-            "learning_rate":self.lr
-        }
-        return dict(list(config.items())
+        raise NotImplementedError
 
+    # Log basic and update infomation in optimization
+    def logBasic(self,logger):
+        raise NotImplementedError
+    def logNorm(self,logger):
+        raise NotImplementedError
 
-class CES(optimizer):
-    pass
 
 class CES(optimizer):
     '''
     an optimizer based on canonical evolution strategy
     '''
     def __init__(self,params,cfg):
-        self.params=params
-        self.lr=cfg["learning_rate"]
-        self.mu=cfg["child_popsize"]
-        self.lam=cfg["parents_popsize"]
-        assert(self.mu <= self.lam)
+        self.params = params
+        self.n = len(params)
+        self.lr = cfg["learning rate"]
+        self.mu = cfg["child popsize"]
+        # self.lam = cfg["parents_popsize"] may be useless
+        self.sigma = cfg["Mutation step"]
+        self.discount = cfg["Discount"]
+        # assert ( self.mu <= self.lam )
 
-        self.w = np.array([np.log(self.u + 0.5) - np.log(i) for i in range(1, self.u + 1)])
+        # create shared nosie table
+        self.noise_table = RandomState(123).randn(int(5e8)).astype('float32')
+
+        # initialize weight of every parents as algorithm
+        self.w = np.array([math.log(self.mu + 0.5) - math.log(i) for i in range(1, self.mu + 1)])
         self.w /= np.sum(self.w)
-    def _evaluation(self):
-        
-        return reward
+    
+    
+    def sample(self):
+        '''return random start id'''
+        return randint(0, len(self.noise_table)-self.n)
 
-    def get_update(self):
-        step=np.zeros_like(len(self.params))
+    def perturb(self , params):
+        '''return pertubed params=(theta + sigma * noise)''' 
+        rand_id = self.sample()
+        epsilon = self.noise_table[rand_id:rand_id + self.n]
+        params = self.params + self.lr * epsilon
+        
+        return params , rand_id
+
+    def get_update(self,reward,randid):
+        '''update params by reward\n no return,return an updated self.params '''
+        step = np.zeros(len(self.params))
+        # numbers of best n childs in reward
+        best = np.array(reward).argsort()[::-1][:self.mu]
+
         for i in range(self.mu):
-            step+=
+            rand_id = randid[best[i]]
+            epsilon = self.noise_table[rand_id:rand_id + self.n]
+            step += self.w * epsilon
+
+        self.params += self.lr * step
+
+    def logBasic(self):
+        '''log some basic in log.txt header'''
+        logger.info('=============Basic information===========')
+        logger.info(msg='Dimension'.ljust(25) + '%f' % self.n)
+        logger.info(msg='Learning rate'.ljust(25) + '%f' % self.lr)
+        logger.info(msg='Poplation size'.ljust(25) + '%f' % self.mu)
+        logger.info(msg='Optimizer'.ljust(25)+'CES')
+        logger.info('=========================================')
+
+    def log(self):
+        '''log informations in every iteration'''
+        logger.info(self.params)
+
+
+    
+# A simple reward function for test
+def fun1(params):
+    reward = 0
+    for i in range(len(params)):
+        if i%2 == 0:
+            reward += np.sin(params[i])
+        else:
+            reward += np.cos(params[i])
+    return reward
+
+# here is a test function
+if __name__ == "__main__":
+    cfg={
+        "learning_rate":0.1,
+        "child_popsize":10,
+        "parents_popsize":10,
+        "discount":0.99
+    }
+
+    # create an instance of logger by module
+    # logging.basicConfig(
+    #     level=logging.DEBUG,
+    #     filename='log.txt',
+    #     filemode='w',
+    #     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+    #     datefmt = '%Y-%m-%d  %H:%M:%S %a'
+    # )
+    logger=logging.getLogger(__name__)
+    logger.setLevel('INFO')
+    
+    # make a 10 dim vector
+    params=np.array(np.arange(10)).astype('float32')
+    optimizer = NES(params,cfg)
+    cumreward = 0
+    iter_times = 0
+
+
+
+    while (iter_times < 100):
+        sample_episode=100
+        reward = [0] * sample_episode
+        randid = [0] * sample_episode
+        for i in range(sample_episode):
+            params , id = optimizer.perturb(params)
+            reward[i] = fun1(params)
+            randid[i] = id
+        
+        optimizer.get_update(reward,randid)
+        iter_times += 1
+        cumreward += fun1(params)
+        logger.info(msg='Iteration'.ljust(25) + '%f' % iter_times)
+        logger.info(msg='CumulativeReward'.ljust(25) + '%f' % cumreward)
+
+
+
+    
+
+    
 
 class NES(optimizer):
     '''
     an optimizer based on natural evolution strategy
     '''
     def __init__(self,params,cfg):
-        self.lr=cfg["learning_rate"]
-        self.itertimes=cfg["itertimes"]
-        self.popsize=cfg["population_size"]
-        self.shape=params.shape()
-    
-    # sample gaussian noise to perturb params  
-    # def _sample(self):
-    #     noise=np.zeros(self.shape)
-    #     coviance=np.identity(self.shape)
-    #     mean=np.zeros(self.shape)
-    #     noise=np.random.multivariate_normal(mean,coviance,(self.shape,1)) # narray
-    #     return noise
-    
-    # evaluate the fitness to assign the credit in the next iteration
-    def _evaluation(self,params):
-        '''
-        Input: PolicyFun(x):evalution policy function from games
-                noise: noise vector, theta.shape*1
-                sigma: learning step size
-                params: parameters in t iteration
-        Output:F(x+noise) 
-        '''
-        sigma=np.matrix(self.sigma)
-        fitness=np.zeros(self.popsize)
-        noiselist=[]
-        assert self.popsize%2==0,'Population config error'
-        for i in range(0,self.popsize):
-            noise=self.Sampling()
-            if (i%2==0):
-                fitness[i]=PolicyFun(theta+noise*(sigma.T))
-            else:
-                fitness[i]=PolicyFun(theta-noise*sigma.T)
-            noiselist.append(noise)
-        noisearray=np.array(noiselist)# popsize*theta.shape
-        return fitness,noisearray
+        self.params = params
+        self.n= len(params)
+        self.lr = cfg["learning_rate"]
+        self.lam = cfg["population_size"]
+        self.sigma = cfg["Mutation size"]
+        self.grad = np.zeros(param.shape)
+        assert self.lam % 2 == 0,'Population config error'
 
-    # rank evalution of fitness to avoid influence of the scale of value
-    def _rank(self,array):
-        '''
-        Input: array:array of fitness\n
-        Output: ranks: a array of rank of fitness\nhave tested
-        '''
-        assert array.shape[0]==1,'Shape setting error'
+        # create shared nosie table
+        self.noise_table = RandomState(123).randn(int(5e8)).astype('float32')
+
+
+    def sample(self):
+        '''return random start id'''
+        return randint(0, len(self.noise_table)-self.n)
+
+    def perturb(self,lamb):
+        '''return a mirrored sample'''
+        rand_id = self.sample()
+        epsilon = self.noise_table[rand_id:rand_id + self.n]
+        if lamb % 2 == 0:
+            params = self.params + self.lr * epsilon
+        else:
+            params = self.params - self.lr * epsilon
+        return params,rand_id
+        
+    @staticmethod
+    def rank(array):
+        '''return an lam*1 array of rank of fitness\nhave tested'''
+        # assert array.shape[0]==1,'Shape setting error'
         rank=np.ones(array.shape,int)# rank as [1,1,1,1,1]
+
         rank[array.argsort()]=np.arange(len(array))
         rank=(rank.astype(float)/(len(array)-1))-0.5    
         return rank
 
     # get estimated natural gradient (rather than calculated gradient)
-    def get_grad(self，noise,rank):
+    def get_grad(self,randid,rank):
         '''
-        Input: rank popsize*1 
-        Output:grad:natural gradient\n
+        return natural gradient
         '''
-        cumgrad=np.zeros(noise.shape)
-        for i in range(0,popsize-1):
-            cumgrad=cumgrad+rank[i-1]*noise[i-1]
-        grad=cumgrad/(self.sigma*self.popsize)
-        return grad
-        
-
+        for i in range(self.lam):
+            rand = randid[i]
+            epsilon = self.noise_table[rand:rand + self.n]
+            self.grad += rank[i] * epsilon
     def get_update(self):
         '''
         Input:params:paramter vector in t iteration

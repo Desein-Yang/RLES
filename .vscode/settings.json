@@ -1,5 +1,5 @@
 {
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true,
-    "python.pythonPath": "/opt/conda/bin/python3"
+    "python.pythonPath": "D:\\Program Files\\Python\\python.exe"
 }

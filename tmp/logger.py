@@ -1,9 +1,12 @@
 
 
 import logging
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf8') 
 logging.basicConfig(
     level=logging.DEBUG,
-    filename='log.txt',
+    filename='./tmp/'+'log.txt',
     filemode='w',
     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
     datefmt = '%Y-%m-%d  %H:%M:%S %a'
@@ -19,7 +22,8 @@ class A():
         logger.info("I'm logger"+str(self.b))
 
     def log2(self):
-        logger.warning(str(self.b)+'is self\'s b')
+        logger.info(msg='Iteration'.ljust(25) + '%f' % self.b)
+
 
 if __name__ == "__main__":
     a=A(12)
